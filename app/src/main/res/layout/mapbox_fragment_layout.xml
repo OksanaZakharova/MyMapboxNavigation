@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:mapbox="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <FrameLayout
+        android:id="@+id/frameLayout"
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000">
+
+        <RelativeLayout
+            android:id="@+id/mapboxLayout"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+
+            <com.mapbox.mapboxsdk.maps.MapView
+                android:id="@+id/mapView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                mapbox:mapbox_styleUrl="@string/mapbox_style_mapbox_streets"
+                tools:layout_editor_absoluteY="8dp"
+                tools:layout_editor_absoluteX="8dp" />
+
+        </RelativeLayout>
+
+    </FrameLayout>
+    <RelativeLayout
+        android:id="@+id/adviceLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:background="#77f4f4f4">
+
+        <TextView
+            android:id="@+id/adviceTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical|center_horizontal"
+            android:paddingLeft="30dp"
+            android:textSize="14sp" />
+
+    </RelativeLayout>
+
+    <Button
+        android:id="@+id/btn_go"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="85dp"
+        android:width="177dp"
+        android:height="65dp"
+        android:background="#ff137bbb"
+        android:text="Go"
+        android:textColor="#ffffff"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:typeface="sans"
+        android:enabled="false"
+        android:visibility="visible" />
+
+</RelativeLayout>

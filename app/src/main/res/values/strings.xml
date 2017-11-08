@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">MyMapboxNavigation</string>
+
+    <string name="mapbox_not_able_create_route">Mapbox is not able to create a route</string>
+</resources>

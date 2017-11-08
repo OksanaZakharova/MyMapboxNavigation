@@ -1,0 +1,42 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 26
+    buildToolsVersion '26.0.2'
+    defaultConfig {
+        applicationId "com.example.oksanazakharova.mymapboxnavigation"
+        minSdkVersion 15
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                includeCompileClasspath false
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+
+    compile 'com.google.dagger:dagger-android:2.11'
+    annotationProcessor 'com.google.dagger:dagger-android-processor:2.11'
+
+    compile 'com.mapbox.mapboxsdk:mapbox-android-navigation:0.6.2'
+    compile ('com.mapbox.mapboxsdk:mapbox-android-navigation-ui:0.6.2') {
+        transitive = true
+    }
+}
