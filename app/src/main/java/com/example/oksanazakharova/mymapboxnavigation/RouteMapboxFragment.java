@@ -29,7 +29,6 @@ import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.constants.MapboxConstants;
-import com.mapbox.mapboxsdk.constants.Style;
 import com.mapbox.mapboxsdk.exceptions.InvalidLatLngBoundsException;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
@@ -41,6 +40,7 @@ import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin;
 import com.mapbox.services.Constants;
 import com.mapbox.services.android.location.LostLocationEngine;
 import com.mapbox.services.android.location.MockLocationEngine;
+import com.mapbox.services.android.navigation.ui.v5.instruction.InstructionView;
 import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
 import com.mapbox.services.android.navigation.ui.v5.voice.NavigationInstructionPlayer;
 import com.mapbox.services.android.navigation.v5.milestone.MilestoneEventListener;
@@ -91,6 +91,7 @@ public class RouteMapboxFragment extends Fragment implements
     private MapboxMap mapboxMap;
 
     private TextView adviceTextView;
+    private InstructionView instructionView;
     private Button goButton;
 
     private MapboxNavigation navigation;
@@ -106,7 +107,7 @@ public class RouteMapboxFragment extends Fragment implements
     private boolean navigationInProgress = false;
 
     private Position currentPosition;
-    private boolean navType = false; //true - real; false - simulation
+    private boolean navType = false; //true - real time; false - simulation
 
     private LocationLayerPlugin locationLayer;
     private NavigationMapRoute mapRoute;
@@ -118,29 +119,6 @@ public class RouteMapboxFragment extends Fragment implements
 
     private Boolean isShowWayPoints = true;
 
-    public void setCoordinatesFromRoute(ArrayList<LatLng> coordinatesFromRoute) {
-        this.coordinatesFromRoute = coordinatesFromRoute;
-    }
-    public ArrayList<PolylineOptions> getSegmentsPolylines() {
-        return this.segmentsPolylines;
-    }
-
-    public void setSegmentsPolylines(ArrayList<PolylineOptions> segmentsPolylines) {
-        this.segmentsPolylines = segmentsPolylines;
-    }
-
-    public void addSegmentsPolylines(List<PolylineOptions> segmentsPolylines) {
-        polylines = mapboxMap.addPolylines(segmentsPolylines);
-    }
-
-    public void removeSegmentsPolylines() {
-        if (polylines != null) {
-            for (Polyline polyline : polylines) {
-                polyline.remove();
-            }
-        }
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -151,7 +129,9 @@ public class RouteMapboxFragment extends Fragment implements
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
+        getActivity().setTheme(R.style.NavigationViewLight);
         super.onCreateView(inflater, container, savedInstanceState);
+
         mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         rootView = inflater.inflate(R.layout.mapbox_fragment_layout, container, false);
@@ -169,7 +149,6 @@ public class RouteMapboxFragment extends Fragment implements
             public void onMapReady(@NonNull MapboxMap mMapboxMap) {
                 Log.v(TAG, "onCreateView onMapReady");
                 mapboxMap = mMapboxMap;
-                mapboxMap.setStyleUrl(Style.MAPBOX_STREETS);
 
                 initLocationEngine();
                 initMapRoute();
@@ -180,7 +159,7 @@ public class RouteMapboxFragment extends Fragment implements
 
         //init navigation
         MapboxNavigationOptions options = MapboxNavigationOptions.builder()
-                .defaultMilestonesEnabled(true)
+                //.defaultMilestonesEnabled(true)
                 .snapToRoute(true)
                 .build();
 
@@ -234,9 +213,9 @@ public class RouteMapboxFragment extends Fragment implements
             @Override
             public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
                 currentRoute = response.body().getRoutes().get(0);
-                Log.v("OZakharova", "currentRoute = "+currentRoute);
+                Log.v("OZakharova", "getMapboxRoute currentRoute = "+currentRoute);
                 mapRoute.addRoute(currentRoute);
-                Log.v("OZakharova", "mapRoute = "+mapRoute);
+                Log.v("OZakharova", "getMapboxRoute mapRoute = "+mapRoute);
 
                 boundCameraToRoute();
                 onRouteMapboxSuccess(currentRoute);
@@ -287,8 +266,6 @@ public class RouteMapboxFragment extends Fragment implements
     }
 
     public void initUI() {
-        adviceTextView = (TextView) rootView.findViewById(R.id.adviceTextView);
-
         goButton = (Button) rootView.findViewById(R.id.btn_go);
         goButton.setVisibility(View.VISIBLE);
         goButton.setOnClickListener(new View.OnClickListener() {
@@ -297,6 +274,9 @@ public class RouteMapboxFragment extends Fragment implements
                 launchNavigation();
             }
         });
+
+        adviceTextView = (TextView) rootView.findViewById(R.id.adviceTextView);
+        instructionView = (InstructionView) rootView.findViewById(R.id.instructionView);
     }
 
     public void onRouteMapboxSuccess(DirectionsRoute currentRoute) {
@@ -305,11 +285,9 @@ public class RouteMapboxFragment extends Fragment implements
         List<Position> positions = lineString.getCoordinates();
 
         if(positions != null) {
-            ArrayList<LatLng> coordinates = new ArrayList<LatLng>();
             for (Position position : positions) {
                 coordinatesFromRoute.add(new LatLng(position.getLatitude(), position.getLongitude()));
             }
-            setCoordinatesFromRoute(coordinates);
         }
         showPreview();
     }
@@ -319,7 +297,6 @@ public class RouteMapboxFragment extends Fragment implements
         goButton.setEnabled(true);
 
         setAnnotationsOnMap(null);
-        drawSegmentsPolylines();
     }
 
     @Override
@@ -421,11 +398,14 @@ public class RouteMapboxFragment extends Fragment implements
     }
 
     private void initMapRoute() {
-        mapRoute = new NavigationMapRoute(navigation, mapView, mapboxMap);//, R.style.NavigationMapRoute);
+        mapRoute = new NavigationMapRoute(navigation, mapView, mapboxMap);
     }
 
     private void launchNavigation() {
         Log.v(TAG, "launchNavigation currentRoute = " + currentRoute);
+
+        adviceTextView.setVisibility(View.VISIBLE);
+        instructionView.setVisibility(View.VISIBLE);
 
         if (navigation !=null && currentRoute != null) {
             navigation.addProgressChangeListener(this);
@@ -452,8 +432,11 @@ public class RouteMapboxFragment extends Fragment implements
     }
 
     public void stopNavigation() {
-
         navigationInProgress = false;
+
+        adviceTextView.setVisibility(View.GONE);
+        instructionView.setVisibility(View.GONE);
+
         // Remove all navigation listeners
         navigation.removeProgressChangeListener(this);
         navigation.removeOffRouteListener(this);
@@ -465,6 +448,18 @@ public class RouteMapboxFragment extends Fragment implements
     }
 
     public void setAnnotationsOnMap(LatLng originCoordinate) {
+        if (isShowWayPoints ) {
+            int i = 1;
+            for (LatLng wayPoint : wayPoints) {
+                mapboxMap.addMarker(new MarkerOptions()
+                        .position(wayPoint)
+                        .title("Waypoint id =" + i + " \n" + wayPoint.getLatitude() + ", " + wayPoint.getLongitude())
+                        .icon(IconFactory.getInstance(mContext).fromResource(R.mipmap.marker))
+                );
+                i++;
+            }
+        }
+
         if ( wayPoints != null && wayPoints.size() > 0 ) {
             if(originCoordinate == null){
                 originCoordinate =  new LatLng(wayPoints.get(0).getLatitude(), wayPoints.get(0).getLongitude());
@@ -481,18 +476,6 @@ public class RouteMapboxFragment extends Fragment implements
                     .position(new LatLng(wayPoints.get(wayPoints.size()-1).getLatitude(), wayPoints.get(wayPoints.size()-1).getLongitude()))
                     .title("Destination")
                     .icon(IconFactory.getInstance(mContext).fromResource(R.mipmap.flag_red)));
-        }
-
-        if (isShowWayPoints ) {
-            int i = 1;
-            for (LatLng wayPoint : wayPoints) {
-                mapboxMap.addMarker(new MarkerOptions()
-                        .position(wayPoint)
-                        .title("Waypoint id =" + i + " \n" + wayPoint.getLatitude() + ", " + wayPoint.getLongitude())
-                        .icon(IconFactory.getInstance(mContext).fromResource(R.mipmap.marker))
-                );
-                i++;
-            }
         }
     }
 
@@ -527,6 +510,8 @@ public class RouteMapboxFragment extends Fragment implements
     public void onProgressChange(Location currentLocation, RouteProgress routeProgress) {
         Log.v(TAG, "onProgressChange currentLocation = " + currentLocation.toString());
 
+        instructionView.update(routeProgress);
+
         currentPosition = Position.fromCoordinates(currentLocation.getLongitude(), currentLocation.getLatitude());
 
         animateCamera(currentLocation);
@@ -536,7 +521,7 @@ public class RouteMapboxFragment extends Fragment implements
     @Override
     public void userOffRoute(final Location location) {
         Log.v(TAG, "userOffRoute");
-        Toast.makeText(getActivity(), getString(R.string.rerouting), Toast.LENGTH_LONG).show();
+        /*Toast.makeText(getActivity(), getString(R.string.rerouting), Toast.LENGTH_LONG).show();
 
         Position newOrigin = Position.fromCoordinates(location.getLatitude(),
                 location.getLongitude());
@@ -570,14 +555,7 @@ public class RouteMapboxFragment extends Fragment implements
             public void onFailure(Call<DirectionsResponse> call, Throwable t) {
                 Toast.makeText(getActivity(),getString(R.string.mapbox_not_able_create_route),Toast.LENGTH_SHORT).show();
             }
-        });
-    }
-
-    public void drawSegmentsPolylines() {
-        List<PolylineOptions> polylines = getSegmentsPolylines();
-        if (polylines != null && !polylines.isEmpty()) {
-            addSegmentsPolylines(polylines);
-        }
+        });*/
     }
 
 }

@@ -27,10 +27,18 @@
         </RelativeLayout>
 
     </FrameLayout>
+
+    <com.mapbox.services.android.navigation.ui.v5.instruction.InstructionView
+        android:id="@+id/instructionView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
     <RelativeLayout
         android:id="@+id/adviceLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_above="@+id/btn_go"
         android:padding="10dp"
         android:background="#77f4f4f4">
 
@@ -40,7 +48,9 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical|center_horizontal"
             android:paddingLeft="30dp"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:textColor="@android:color/background_dark"
+            android:visibility="gone" />
 
     </RelativeLayout>
 
@@ -50,7 +60,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="85dp"
+        android:layout_marginBottom="20dp"
         android:width="177dp"
         android:height="65dp"
         android:background="#ff137bbb"
